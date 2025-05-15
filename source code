@@ -1,0 +1,129 @@
+# Step 1: Import Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_auc_score, roc_curve
+
+# Step 2: Load Dataset
+df = pd.read_csv('/kaggle/RTA Dataset.csv')  # Update path if using local file
+df.head()
+
+# Overview
+df.info()
+df.describe()
+df.isnull().sum()
+
+# Drop or fill missing values
+df = df.dropna()  # Or use imputation for specific columns
+
+# Drop duplicates
+df = df.drop_duplicates()# Univariate Plots
+plt.figure(figsize=(10, 6))
+sns.countplot(x='Accident_severity', data=df)
+plt.title('Distribution of Accident Severity')
+
+# Bivariate Analysis
+sns.boxplot(x='Accident_severity', y='Number_of_vehicles_involved', data=df)
+
+# Correlation Heatmap
+# plt.figure(figsize=(10, 8))
+# sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+# plt.title('Feature Correlation')
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Correlation Heatmap
+plt.figure(figsize=(10, 8))
+correlation_matrix = df.corr(numeric_only=True)  # Ensures non-numeric columns are excluded
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+plt.title('Feature Correlation', fontsize=16)
+plt.xticks(rotation=45)
+plt.yticks(rotation=0)
+plt.tight_layout()
+plt.show()
+# Encode categorical variables
+le = LabelEncoder()
+for col in df.select_dtypes(include=['object']).columns:
+    df[col] = le.fit_transform(df[col])
+
+# Example: Create hour_of_day or is_weekend if applicable
+# df['Hour'] = pd.to_datetime(df['Time']).dt.hour
+# df['is_weekend'] = pd.to_datetime(df['Date']).dt.dayofweek > 4
+
+# Feature and label split
+X = df.drop('Accident_severity', axis=1)
+y = df['Accident_severity']
+
+# Normalize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+# Display results
+print("\nShape of features (X):", X.shape)
+print("Shape of label (y):", y.shape)
+print("\nFirst 5 rows of scaled features:")
+print(X_scaled[:5])
+# Encode categorical variables
+le = LabelEncoder()
+for col in df.select_dtypes(include=['object']).columns:
+    df[col] = le.fit_transform(df[col])
+
+# Example: Create hour_of_day or is_weekend if applicable
+# df['Hour'] = pd.to_datetime(df['Time']).dt.hour
+# df['is_weekend'] = pd.to_datetime(df['Date']).dt.dayofweek > 4
+
+# Feature and label split
+X = df.drop('Accident_severity', axis=1)
+y = df['Accident_severity']
+
+# Normalize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+# Display results
+print("\nShape of features (X):", X.shape)
+print("Shape of label (y):", y.shape)
+print("\nFirst 5 rows of scaled features:")
+print(X_scaled[:5])
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42, stratify=y)
+
+# Random Forest Model
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)
+y_pred_rf = rf.predict(X_test)
+
+# Logistic Regression
+lr = LogisticRegression(max_iter=200)
+lr.fit(X_train, y_train)
+y_pred_lr = lr.predict(X_test)
+
+# Evaluation
+print("Random Forest Classification Report:")
+print(classification_report(y_test, y_pred_rf))
+print("Accuracy:", accuracy_score(y_test, y_pred_rf))
+
+print("\nLogistic Regression Classification Report:")
+print(classification_report(y_test, y_pred_lr))
+print("Accuracy:", accuracy_score(y_test, y_pred_lr))
+# Confusion Matrix
+sns.heatmap(confusion_matrix(y_test, y_pred_rf), annot=True, fmt='d', cmap='Blues')
+plt.title("Random Forest Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+# Feature Importance
+importances = rf.feature_importances_
+indices = np.argsort(importances)[::-1]
+features = X.columns
+
+plt.figure(figsize=(12, 6))
+plt.title("Feature Importances")
+sns.barplot(x=importances[indices], y=features[indices])
+plt.show()
